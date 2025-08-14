@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sypace - Task Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Crimson+Text:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden;
+        }
+        .sypace-title { 
+            font-family: 'Dancing Script', cursive; 
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .sypace-subtitle {
+            font-family: 'Crimson Text', serif;
+            font-weight: 400;
+            font-style: italic;
+        }
+        
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar.open { 
+            transform: translateX(0); 
+        }
+        
+        .modal {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95) translateY(-20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateY(0);
+        }
+        
+        .task-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(206, 140, 149, 0.2);
+        }
+        
+        .priority-high { border-left: 4px solid #dc2626; }
+        .priority-medium { border-left: 4px solid #ea580c; }
+        .priority-low { border-left: 4px solid #059669; }
+        
+        .fade-in { 
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        :root {
+            --primary: #ce8c95;
+            --secondary: #d9a5ac;
+            --accent: #e4bfc4;
+            --background: linear-gradient(135deg, #faf8f9, #f5f1f2, #f0eaeb);
+            --card-bg: #ffffff;
+            --text: #333333;
+            --shadow: rgba(206, 140, 149, 0.15);
+        }
+
+        .theme-soft-pink {
+            --primary: #f8b4cb;
+            --secondary: #f5a3bd;
+            --accent: #f2c2d0;
+            --background: linear-gradient(135deg, #fef7f9, #fdf2f5, #fcecf1);
+            --shadow: rgba(248, 180, 203, 0.15);
+        }
+
+        .theme-warm-yellow {
+            --primary: #fde68a;
+            --secondary: #fcd34d;
+            --accent: #fed7aa;
+            --background: linear-gradient(135deg, #fffbeb, #fef3c7, #fde68a);
+            --shadow: rgba(253, 230, 138, 0.15);
+        }
+
+        .theme-sky-blue {
+            --primary: #93c5fd;
+            --secondary: #7dd3fc;
+            --accent: #bfdbfe;
+            --background: linear-gradient(135deg, #f0f9ff, #e0f2fe, #bae6fd);
+            --shadow: rgba(147, 197, 253, 0.15);
+        }
+
+        .theme-mint-green {
+            --primary: #a7f3d0;
+            --secondary: #6ee7b7;
+            --accent: #d1fae5;
+            --background: linear-gradient(135deg, #f0fdf4, #dcfce7, #bbf7d0);
+            --shadow: rgba(167, 243, 208, 0.15);
+        }
+
+        .theme-lavender {
+            --primary: #c4b5fd;
+            --secondary: #a78bfa;
+            --accent: #ddd6fe;
+            --background: linear-gradient(135deg, #faf5ff, #f3e8ff, #e9d5ff);
+            --shadow: rgba(196, 181, 253, 0.15);
+        }
+
+        .theme-peach {
+            --primary: #fed7aa;
+            --secondary: #fdba74;
+            --accent: #fde68a;
+            --background: linear-gradient(135deg, #fffbeb, #fef3c7, #fed7aa);
+            --shadow: rgba(254, 215, 170, 0.15);
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+            color: white !important;
+        }
+
+        .floating-btn {
+            box-shadow: 0 12px 35px var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 16px 45px var(--shadow);
+        }
+
+        .menu-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .menu-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.35) !important;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 70;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.with-timer {
+            top: 140px;
+        }
+
+        .floating-timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 65;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 200px;
+        }
+        .floating-timer.show {
+            transform: translateX(0);
+        }
+
+        .subtask-item {
+            transition: all 0.2s ease;
+        }
+        .subtask-item:hover {
+            background-color: rgba(206, 140, 149, 0.1);
+        }
+
+        .theme-option {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .theme-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+        .theme-option.selected {
+            border: 3px solid var(--primary);
+            transform: scale(1.05);
+        }
+
+        .icon-option {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .icon-option:hover {
+            transform: scale(1.1);
+        }
+        .icon-option.selected {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+
+        .folder-item {
+            max-width: 200px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body style="background: var(--background); min-height: 100vh;">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed left-0 top-0 h-full w-72 z-50 shadow-2xl overflow-y-auto" style="background: linear-gradient(180deg, var(--primary), var(--secondary));">
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-xl font-semibold text-white">Menu</h2>
+                <button onclick="closeSidebar()" class="text-white text-xl hover:opacity-70 transition-all duration-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Profile Section -->
+            <div class="bg-white bg-opacity-20 rounded-xl p-4 mb-6 text-center backdrop-blur-sm">
+                <div class="relative">
+                    <div class="w-16 h-16 bg-white bg-opacity-30 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl overflow-hidden">
+                        <img id="userAvatar" class="w-full h-full object-cover hidden" alt="Profile">
+                        <i id="userAvatarIcon" class="fas fa-user text-white"></i>
+                    </div>
+                    <button onclick="showProfileSettings()" class="absolute -top-1 -right-1 w-6 h-6 bg-white bg-opacity-30 rounded-full flex items-center justify-center text-xs text-white hover:bg-opacity-50 transition-all">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+                <h3 class="text-white font-semibold text-base" id="displayName">Productive User</h3>
+                <div class="flex justify-center gap-4 mt-3 text-sm text-white text-opacity-90">
+                    <div class="text-center">
+                        <div class="font-bold text-base" id="currentStreak">0</div>
+                        <div class="text-xs">Day Streak</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-bold text-base" id="totalTasks">0</div>
+                        <div class="text-xs">Tasks Done</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus Timer Section -->
+            <div class="bg-white bg-opacity-20 rounded-xl p-4 mb-6 backdrop-blur-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-clock text-white text-base"></i>
+                        <h3 class="text-white font-semibold text-base">Focus Timer</h3>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="toggleTimerSound()" id="soundToggleBtn" class="w-7 h-7 rounded-full bg-white bg-opacity-20 text-white flex items-center justify-center hover:bg-opacity-30 transition-all text-xs">
+                            <i class="fas fa-volume-up" id="soundIcon"></i>
+                        </button>
+                        <button onclick="showFloatingTimer()" class="w-7 h-7 rounded-full bg-white bg-opacity-20 text-white flex items-center justify-center hover:bg-opacity-30 transition-all text-xs">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="timer-display text-white mb-3 text-2xl font-bold" id="timerDisplay">25:00</div>
+                    
+                    <!-- Custom Time Input -->
+                    <div class="flex justify-center items-center gap-2 mb-3">
+                        <input type="number" id="customMinutes" min="0" max="120" value="25" class="w-12 px-1 py-1 rounded text-center text-xs bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 border-none focus:outline-none focus:bg-opacity-30">
+                        <span class="text-white text-xs">min</span>
+                        <input type="number" id="customSeconds" min="0" max="59" value="0" class="w-12 px-1 py-1 rounded text-center text-xs bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 border-none focus:outline-none focus:bg-opacity-30">
+                        <span class="text-white text-xs">sec</span>
+                        <button onclick="setCustomTimer()" class="px-2 py-1 bg-white bg-opacity-20 text-white rounded text-xs hover:bg-opacity-30 transition-all">Set</button>
+                    </div>
+                    
+                    <!-- Preset Buttons -->
+                    <div class="flex justify-center gap-1 mb-3">
+                        <button onclick="setTimer(15)" class="px-2 py-1 bg-white bg-opacity-20 text-white rounded-full text-xs hover:bg-opacity-30 transition-all">15</button>
+                        <button onclick="setTimer(25)" class="px-2 py-1 bg-white bg-opacity-20 text-white rounded-full text-xs hover:bg-opacity-30 transition-all">25</button>
+                        <button onclick="setTimer(45)" class="px-2 py-1 bg-white bg-opacity-20 text-white rounded-full text-xs hover:bg-opacity-30 transition-all">45</button>
+                    </div>
+                    
+                    <!-- Timer Controls -->
+                    <div class="flex justify-center gap-2">
+                        <button onclick="startTimer()" id="startBtn" class="w-10 h-10 rounded-full text-white flex items-center justify-center transition-all duration-300 hover:scale-110" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                            <i class="fas fa-play text-sm"></i>
+                        </button>
+                        <button onclick="pauseTimer()" id="pauseBtn" class="w-10 h-10 rounded-full flex items-center justify-center hidden transition-all duration-300 hover:scale-110" style="background: var(--accent); color: var(--primary);">
+                            <i class="fas fa-pause text-sm"></i>
+                        </button>
+                        <button onclick="resetTimer()" class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110" style="background: var(--accent); color: var(--primary);">
+                            <i class="fas fa-redo text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <div class="bg-white bg-opacity-20 rounded-xl p-3 text-center backdrop-blur-sm">
+                    <div class="text-lg font-bold text-white" id="activeCount">0</div>
+                    <div class="text-white text-opacity-80 text-xs">Active</div>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-xl p-3 text-center backdrop-blur-sm">
+                    <div class="text-lg font-bold text-white" id="completedCount">0</div>
+                    <div class="text-white text-opacity-80 text-xs">Done</div>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="space-y-3">
+                <!-- Main Menu Items -->
+                <button onclick="showCalendar()" class="menu-item w-full py-3 bg-white bg-opacity-20 text-white rounded-lg font-medium hover:bg-opacity-30 transition-all text-sm">
+                    <i class="fas fa-calendar mr-3"></i> Calendar
+                </button>
+
+                <button onclick="showSettings()" class="menu-item w-full py-3 bg-white bg-opacity-20 text-white rounded-lg font-medium hover:bg-opacity-30 transition-all text-sm">
+                    <i class="fas fa-cog mr-3"></i> Settings
+                </button>
+
+                <button onclick="logout()" class="menu-item w-full py-3 bg-white bg-opacity-20 text-white rounded-lg font-medium hover:bg-opacity-30 transition-all text-sm mt-4">
+                    <i class="fas fa-sign-out-alt mr-3"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Settings Modal -->
+    <div id="profileModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl" style="background: var(--card-bg);">
+            <h3 class="text-2xl font-semibold mb-6 text-center" style="color: var(--primary);">Edit Profile</h3>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--secondary);">Display Name</label>
+                    <input type="text" id="profileNameInput" placeholder="Enter your name" class="w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:border-opacity-80 transition-all duration-300 text-base" style="border-color: var(--accent); background: var(--card-bg);">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-3" style="color: var(--secondary);">Profile Picture</label>
+                    
+                    <div class="flex gap-3 mb-4">
+                        <button onclick="chooseProfilePhoto()" class="flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 text-sm" style="background: var(--accent); color: var(--primary);">
+                            <i class="fas fa-upload mr-2"></i>Upload Photo
+                        </button>
+                        <button onclick="chooseProfileIcon()" class="flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 text-sm" style="background: var(--accent); color: var(--primary);">
+                            <i class="fas fa-icons mr-2"></i>Choose Icon
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="profilePhotoInput" accept="image/*" class="hidden" onchange="handleProfilePhotoUpload(event)">
+                    
+                    <!-- Icon Selection -->
+                    <div id="iconSelection" class="hidden">
+                        <div class="text-sm font-medium mb-2" style="color: var(--secondary);">Choose an Icon:</div>
+                        <div class="grid grid-cols-6 gap-2">
+                            <div class="icon-option w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer" style="background: var(--accent); color: var(--primary);" onclick="selectIcon('user')" data-icon="user">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="icon-option w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer" style="background: var(--accent); color: var(--primary);" onclick="selectIcon('star')" data-icon="star">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="icon-option w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer" style="background: var(--accent); color: var(--primary);" onclick="selectIcon('heart')" data-icon="heart">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="icon-option w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer" style="background: var(--accent); color: var(--primary);" onclick="selectIcon('rocket')" data-icon="rocket">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <div class="icon-option w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer" style="background: var(--accent); color: var(--primary);" onclick="selectIcon('crown')" data-icon="crown">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="icon-option w-10 h-10 rounded-full flex items-center justify-center text-lg cursor-pointer" style="background: var(--accent); color: var(--primary);" onclick="selectIcon('gem')" data-icon="gem">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="mt-4 text-center">
+                        <div class="text-sm font-medium mb-2" style="color: var(--secondary);">Preview:</div>
+                        <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl overflow-hidden" style="background: var(--accent);">
+                            <img id="profilePreviewImg" class="w-full h-full object-cover hidden" alt="Preview">
+                            <i id="profilePreviewIcon" class="fas fa-user" style="color: var(--primary);"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-8">
+                <button onclick="hideProfileModal()" class="flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                    Cancel
+                </button>
+                <button onclick="saveProfile()" class="flex-1 px-6 py-3 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Modal -->
+    <div id="calendarModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl" style="background: var(--card-bg);">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-semibold" style="color: var(--primary);">Calendar</h3>
+                <button onclick="hideCalendarModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Calendar Grid -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <button onclick="previousMonth()" class="p-2 rounded-lg hover:bg-gray-100 transition-all">
+                            <i class="fas fa-chevron-left" style="color: var(--primary);"></i>
+                        </button>
+                        <h4 class="text-xl font-semibold" style="color: var(--primary);" id="calendarMonth">December 2024</h4>
+                        <button onclick="nextMonth()" class="p-2 rounded-lg hover:bg-gray-100 transition-all">
+                            <i class="fas fa-chevron-right" style="color: var(--primary);"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-7 gap-1 mb-2">
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Sun</div>
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Mon</div>
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Tue</div>
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Wed</div>
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Thu</div>
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Fri</div>
+                        <div class="text-center text-sm font-medium py-2" style="color: var(--secondary);">Sat</div>
+                    </div>
+                    
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+                        <!-- Calendar days will be generated here -->
+                    </div>
+                </div>
+                
+                <!-- Upcoming Tasks -->
+                <div class="lg:col-span-1">
+                    <h5 class="text-lg font-semibold mb-4" style="color: var(--primary);">Upcoming Tasks</h5>
+                    <div id="upcomingTasks" class="space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Upcoming tasks will be listed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" style="background: var(--card-bg);">
+            <h3 class="text-2xl font-semibold mb-6 text-center" style="color: var(--primary);">Settings</h3>
+            
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-lg font-semibold mb-4" style="color: var(--primary);">Theme Selection</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="theme-option p-4 rounded-xl border-2 border-transparent" data-theme="rose-pink" onclick="changeTheme('rose-pink')" style="background: linear-gradient(135deg, #ce8c95, #d9a5ac); box-shadow: 0 4px 15px rgba(206, 140, 149, 0.3);">
+                            <div class="text-white font-medium text-center drop-shadow-sm">Rose Pink</div>
+                        </div>
+                        <div class="theme-option p-4 rounded-xl border-2 border-transparent" data-theme="soft-pink" onclick="changeTheme('soft-pink')" style="background: linear-gradient(135deg, #f8b4cb, #f5a3bd); box-shadow: 0 4px 15px rgba(248, 180, 203, 0.3);">
+                            <div class="text-white font-medium text-center drop-shadow-sm">Soft Pink</div>
+                        </div>
+                        <div class="theme-option p-4 rounded-xl border-2 border-transparent" data-theme="warm-yellow" onclick="changeTheme('warm-yellow')" style="background: linear-gradient(135deg, #fde68a, #fcd34d); box-shadow: 0 4px 15px rgba(253, 230, 138, 0.4);">
+                            <div class="text-amber-800 font-medium text-center drop-shadow-sm">Warm Yellow</div>
+                        </div>
+                        <div class="theme-option p-4 rounded-xl border-2 border-transparent" data-theme="sky-blue" onclick="changeTheme('sky-blue')" style="background: linear-gradient(135deg, #93c5fd, #7dd3fc); box-shadow: 0 4px 15px rgba(147, 197, 253, 0.3);">
+                            <div class="text-white font-medium text-center drop-shadow-sm">Sky Blue</div>
+                        </div>
+                        <div class="theme-option p-4 rounded-xl border-2 border-transparent" data-theme="mint-green" onclick="changeTheme('mint-green')" style="background: linear-gradient(135deg, #a7f3d0, #6ee7b7); box-shadow: 0 4px 15px rgba(167, 243, 208, 0.3);">
+                            <div class="text-emerald-800 font-medium text-center drop-shadow-sm">Mint Green</div>
+                        </div>
+                        <div class="theme-option p-4 rounded-xl border-2 border-transparent" data-theme="lavender" onclick="changeTheme('lavender')" style="background: linear-gradient(135deg, #c4b5fd, #a78bfa); box-shadow: 0 4px 15px rgba(196, 181, 253, 0.3);">
+                            <div class="text-white font-medium text-center drop-shadow-sm">Lavender</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-8">
+                <button onclick="hideSettingsModal()" class="px-8 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Deleted Modal -->
+    <div id="recentlyDeletedModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl" style="background: var(--card-bg);">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-semibold" style="color: var(--primary);">Recently Deleted</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="deleteCompletedTasksAfterMonth()" class="px-4 py-2 text-sm rounded-lg font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);" title="Move completed tasks older than 1 month to recently deleted">
+                        <i class="fas fa-calendar-times mr-2"></i>Clean Old Completed
+                    </button>
+                    <button onclick="hideRecentlyDeletedModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="deletedTasksList" class="space-y-4">
+                <!-- Deleted tasks will be rendered here -->
+            </div>
+            
+            <div id="emptyDeletedState" class="text-center py-20 hidden">
+                <div class="text-6xl mb-4 opacity-30">
+                    <i class="fas fa-trash" style="color: var(--primary);"></i>
+                </div>
+                <h4 class="text-xl font-semibold mb-2" style="color: var(--primary);">No deleted tasks</h4>
+                <p class="text-gray-600">Deleted tasks will appear here and be automatically removed after 30 days.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl" style="background: var(--card-bg);">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: var(--accent);">
+                    <i class="fas fa-sign-out-alt text-2xl" style="color: var(--primary);"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2" style="color: var(--primary);">Confirm Logout</h3>
+                <p class="text-gray-600 mb-6">Are you sure you want to log out? Your tasks will be saved locally.</p>
+                
+                <div class="flex gap-3">
+                    <button onclick="hideLogoutModal()" class="flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                        Cancel
+                    </button>
+                    <button onclick="confirmLogout()" class="flex-1 px-6 py-3 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                        Logout
+                    </button>
+                </div>
+                <script>
+                    function confirmLogout() {
+                        window.location.href = 'index.html';
+                    }
+                </script>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Timer -->
+    <div id="floatingTimer" class="floating-timer bg-white rounded-2xl p-4 shadow-2xl" style="background: var(--card-bg); box-shadow: 0 12px 35px var(--shadow);">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-clock text-sm" style="color: var(--primary);"></i>
+                <h4 class="font-semibold text-sm" style="color: var(--primary);">Focus Timer</h4>
+            </div>
+            <button onclick="hideFloatingTimer()" class="text-gray-400 hover:text-gray-600 text-sm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="text-center">
+            <div class="timer-display text-xl font-bold mb-3" style="color: var(--primary);" id="floatingTimerDisplay">25:00</div>
+            
+            <!-- Timer Controls -->
+            <div class="flex justify-center gap-2">
+                <button onclick="startTimer(); playBackgroundAudio()" id="floatingStartBtn" class="w-8 h-8 rounded-full text-white flex items-center justify-center transition-all duration-300 hover:scale-110" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button onclick="pauseTimer()" id="floatingPauseBtn" class="w-8 h-8 rounded-full flex items-center justify-center hidden transition-all duration-300 hover:scale-110" style="background: var(--accent); color: var(--primary);">
+                    <i class="fas fa-pause text-xs"></i>
+                </button>
+                <button onclick="resetTimer()" class="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110" style="background: var(--accent); color: var(--primary);">
+                    <i class="fas fa-redo text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification bg-white rounded-2xl p-4 shadow-2xl max-w-sm" style="background: var(--card-bg); box-shadow: 0 12px 35px var(--shadow);">
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background: var(--primary);">
+                <i class="fas fa-bell text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold text-sm mb-1" style="color: var(--primary);" id="notificationTitle">Notification</h4>
+                <p class="text-xs text-gray-600" id="notificationMessage">Message here</p>
+                <button onclick="closeNotification()" class="text-xs mt-2 hover:underline" style="color: var(--secondary);">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300" onclick="closeSidebar()"></div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-screen pb-24">
+        <!-- Quote Section -->
+        <div class="px-6 pt-4 pb-2">
+            <div class="bg-white bg-opacity-70 rounded-xl p-4 text-center backdrop-blur-sm">
+                <p id="inspirationalQuote" class="text-sm font-medium italic mb-1" style="color: var(--primary);">
+                    "The way to get started is to quit talking and begin doing."
+                </p>
+                <span id="quoteAuthor" class="text-xs opacity-75" style="color: var(--secondary);">— Walt Disney</span>
+            </div>
+        </div>
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6">
+            <button onclick="openSidebar()" class="text-3xl hover:scale-110 transition-all duration-300" style="color: var(--primary);">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="text-center">
+                <h1 class="sypace-title text-4xl font-bold" style="color: var(--primary);">Sypace</h1>
+                <p class="sypace-subtitle text-lg font-medium" style="color: var(--secondary);">A space for your tasks</p>
+            </div>
+            
+            <div class="relative">
+                <button onclick="showRecentlyDeleted()" class="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110" style="background: var(--accent); color: var(--primary);" title="Recently Deleted">
+                    <i class="fas fa-trash text-lg"></i>
+                </button>
+                <div id="deletedTasksCount" class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center text-white hidden" style="background: var(--primary);">0</div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="px-6 mb-6">
+            <div class="bg-white rounded-2xl p-6 shadow-lg backdrop-blur-sm" style="background: var(--card-bg); box-shadow: 0 8px 35px var(--shadow);">
+                <div class="mb-4">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search tasks..." 
+                            class="w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:border-opacity-80 transition-all duration-300" 
+                            style="border-color: var(--accent); background: var(--card-bg);"
+                            oninput="searchTasks()"
+                        >
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="filterTasks('all')" class="filter-tab active px-6 py-3 rounded-full font-bold transition-all duration-300 text-white" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">All</button>
+                    <button onclick="filterTasks('active')" class="filter-tab px-6 py-3 rounded-full font-bold transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">Active</button>
+                    <button onclick="filterTasks('completed')" class="filter-tab px-6 py-3 rounded-full font-bold transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">Completed</button>
+                    <button onclick="filterTasks('overdue')" class="filter-tab px-6 py-3 rounded-full font-bold transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">Overdue</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tasks Container -->
+        <div class="px-6">
+            <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Tasks will be added here -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-20">
+                <div class="text-8xl mb-6 opacity-30">
+                    <i class="fas fa-tasks" style="color: var(--primary);"></i>
+                </div>
+                <h3 class="text-3xl font-semibold mb-4" style="color: var(--primary);">No tasks yet</h3>
+                <p class="text-xl font-medium mb-8" style="color: var(--secondary);">Add your first task to get started!</p>
+                <button onclick="showAddTaskModal()" class="px-10 py-4 text-white rounded-2xl font-semibold shadow-lg hover:scale-105 transition-all duration-300" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); box-shadow: 0 8px 25px var(--shadow);">
+                    <i class="fas fa-plus mr-3"></i>Add Your First Task
+                </button>
+            </div>
+        </div>
+
+        <!-- Floating Add Button -->
+        <button id="floatingAddBtn" onclick="showAddTaskModal()" class="floating-btn fixed bottom-8 right-8 w-16 h-16 rounded-full text-white text-2xl font-bold hover:scale-110 transition-all duration-300 z-40 hidden" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- Add/Edit Task Modal -->
+        <div id="taskModal" class="modal fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" style="background: var(--card-bg);">
+                <h3 id="modalTitle" class="text-2xl font-semibold mb-6 text-center" style="color: var(--primary);">Add New Task</h3>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--secondary);">Task Title *</label>
+                        <input type="text" id="taskInput" placeholder="What needs to be done?" class="w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:border-opacity-80 transition-all duration-300 text-base" style="border-color: var(--accent); background: var(--card-bg);" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--secondary);">Description</label>
+                        <textarea id="taskDescription" placeholder="Add more details..." class="w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:border-opacity-80 transition-all duration-300 text-base resize-none" rows="3" style="border-color: var(--accent); background: var(--card-bg);"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-3" style="color: var(--secondary);">Due Date</label>
+                        
+                        <!-- Quick Date Options -->
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <button type="button" onclick="setQuickDate('today')" class="px-3 py-1 text-xs rounded-full font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                                Today
+                            </button>
+                            <button type="button" onclick="setQuickDate('tomorrow')" class="px-3 py-1 text-xs rounded-full font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                                Tomorrow
+                            </button>
+                            <button type="button" onclick="setQuickDate('nextWeek')" class="px-3 py-1 text-xs rounded-full font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                                Next Week
+                            </button>
+                            <button type="button" onclick="clearDate()" class="px-3 py-1 text-xs rounded-full font-medium transition-all duration-300 hover:scale-105 bg-gray-200 text-gray-600">
+                                Clear
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="date" id="dueDateInput" class="px-3 py-2 border-2 rounded-lg focus:outline-none text-sm transition-all duration-300" style="border-color: var(--accent); background: var(--card-bg);">
+                            <input type="time" id="dueTimeInput" class="px-3 py-2 border-2 rounded-lg focus:outline-none text-sm transition-all duration-300" style="border-color: var(--accent); background: var(--card-bg);">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--secondary);">Priority</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="priority" value="low" checked>
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                    <span class="text-sm">Low</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="priority" value="medium">
+                                    <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                    <span class="text-sm">Medium</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="priority" value="high">
+                                    <span class="w-3 h-3 rounded-full bg-red-600"></span>
+                                    <span class="text-sm">High</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--secondary);">Category</label>
+                            <div class="space-y-2">
+                                <select id="categorySelect" class="w-full px-3 py-2 border-2 rounded-lg focus:outline-none text-sm transition-all duration-300" style="border-color: var(--accent); background: var(--card-bg);" onchange="handleCategoryChange()">
+                                    <option value="Personal">Personal</option>
+                                    <option value="Work">Work</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Learning">Learning</option>
+                                    <option value="custom">+ Add Custom Category</option>
+                                </select>
+                                <input type="text" id="customCategoryInput" placeholder="Enter custom category..." class="w-full px-3 py-2 border-2 rounded-lg focus:outline-none text-sm transition-all duration-300 hidden" style="border-color: var(--accent); background: var(--card-bg);">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-sm font-medium" style="color: var(--secondary);">Subtasks</label>
+                        </div>
+                        
+                        <!-- Quick Add Subtask Input -->
+                        <div class="mb-3">
+                            <div class="flex gap-2">
+                                <input type="text" id="quickSubtaskInput" placeholder="Type subtask and press Enter..." class="flex-1 px-3 py-2 border-2 rounded-lg focus:outline-none text-sm transition-all duration-300" style="border-color: var(--accent); background: var(--card-bg);" onkeypress="handleSubtaskEnter(event)">
+                                <button type="button" onclick="addQuickSubtask()" class="px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 text-sm" style="background: var(--primary); color: white;">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="modalSubtasksList" class="space-y-2 max-h-40 overflow-y-auto">
+                            <!-- Subtasks will be added here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-8">
+                    <button onclick="hideTaskModal()" class="flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: var(--accent); color: var(--primary);">
+                        Cancel
+                    </button>
+                    <button onclick="saveTask()" class="flex-1 px-6 py-3 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                        Save Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background music (for playBackgroundAudio) -->
+    <audio id="backgroundAudio" preload="auto" loop>
+        <source src="TinyLightTBHK.mp3" type="audio/mp3">
+        <source src="TinyLight.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Timer sound (for playTimerSound) -->
+    <audio id="timerAudio" preload="auto">
+        <source src="beep.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <audio controls>
+        <source src="TinyLightTBHK.mp3" type="audio/mp3">
+        <source src="TinyLight.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // Application State
+        let appState = {
+            tasks: JSON.parse(localStorage.getItem('sypace_tasks')) || [],
+            deletedTasks: JSON.parse(localStorage.getItem('sypace_deleted_tasks')) || [],
+            currentFilter: 'all',
+
+            searchQuery: '',
+            editingTaskId: null,
+            modalSubtasks: [],
+            currentTheme: localStorage.getItem('sypace_theme') || 'rose-pink',
+            userProfile: JSON.parse(localStorage.getItem('sypace_profile')) || {
+                name: 'Productive User',
+                avatar: null,
+                avatarType: 'icon',
+                avatarIcon: 'user'
+            },
+
+            timer: {
+                minutes: 25,
+                seconds: 0,
+                isRunning: false,
+                isPaused: false,
+                interval: null,
+                soundEnabled: JSON.parse(localStorage.getItem('sypace_timer_sound')) !== false,
+                isFloating: false
+            },
+            calendar: {
+                currentMonth: new Date().getMonth(),
+                currentYear: new Date().getFullYear(),
+                selectedDate: null
+            }
+        };
+
+        const quotes = [
+            { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+            { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+            { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+            { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+            { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+            { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+            { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+            { text: "The only person you are destined to become is the person you decide to be.", author: "Ralph Waldo Emerson" },
+            { text: "The question isn't who is going to let me; it's who is going to stop me.", author: "Ayn Rand" },
+            { text: "Winning is not a sometime thing; it's an all the time thing.", author: "Vince Lombardi" },
+            { text: "Believe in yourself and all that you are. Know that there is something inside you that is greater than any obstacle.", author: "Christian D. Larson" },
+            { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky" },
+            { text: "I alone cannot change the world, but I can cast a stone across the water to create many ripples.", author: "Mother Teresa" },
+            { text: "You become what you believe.", author: "Oprah Winfrey" },
+            { text: "The most difficult thing is the decision to act, the rest is merely tenacity.", author: "Amelia Earhart" },
+            { text: "How wonderful it is that nobody need wait a single moment before starting to improve the world.", author: "Anne Frank" },
+            { text: "The unexamined life is not worth living.", author: "Socrates" },
+            { text: "Everything you've ever wanted is on the other side of fear.", author: "George Addair" },
+            { text: "Dream big and dare to fail.", author: "Norman Vaughan" },
+            { text: "You may be disappointed if you fail, but you are doomed if you don't try.", author: "Beverly Sills" },
+            { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+            { text: "Hardships often prepare ordinary people for an extraordinary destiny.", author: "C.S. Lewis" },
+            { text: "Too many of us are not living our dreams because we are living our fears.", author: "Les Brown" },
+            { text: "I have learned over the years that when one's mind is made up, this diminishes fear.", author: "Rosa Parks" },
+            { text: "I didn't fail the test. I just found 100 ways to do it wrong.", author: "Benjamin Franklin" },
+            { text: "If you're offered a seat on a rocket ship, don't ask what seat! Just get on.", author: "Sheryl Sandberg" }
+        ];
+
+        // Initialize the app
+        function init() {
+            loadTheme();
+            loadProfile();
+            cleanupExpiredTasks();
+            cleanupOldDeletedTasks();
+            renderTasks();
+            updateStats();
+            updateDeletedTasksCount();
+            updateQuote();
+            updateTimerDisplay();
+            updateSoundButtons();
+            console.log('Sypace Task Manager initialized successfully!');
+        }
+
+        // Storage Functions
+        function saveToStorage() {
+            localStorage.setItem('sypace_tasks', JSON.stringify(appState.tasks));
+            localStorage.setItem('sypace_deleted_tasks', JSON.stringify(appState.deletedTasks));
+            localStorage.setItem('sypace_profile', JSON.stringify(appState.userProfile));
+            localStorage.setItem('sypace_theme', appState.currentTheme);
+        }
+
+        // Theme Functions
+        function loadTheme() {
+            document.body.className = `theme-${appState.currentTheme}`;
+            // Update selected theme in settings
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            const selectedTheme = document.querySelector(`[data-theme="${appState.currentTheme}"]`);
+            if (selectedTheme) {
+                selectedTheme.classList.add('selected');
+            }
+        }
+
+        function changeTheme(themeName) {
+            appState.currentTheme = themeName;
+            loadTheme();
+            saveToStorage();
+        }
+
+        // Profile Functions
+        function loadProfile() {
+            document.getElementById('displayName').textContent = appState.userProfile.name;
+            
+            const avatarImg = document.getElementById('userAvatar');
+            const avatarIcon = document.getElementById('userAvatarIcon');
+            
+            if (appState.userProfile.avatarType === 'photo' && appState.userProfile.avatar) {
+                avatarImg.src = appState.userProfile.avatar;
+                avatarImg.classList.remove('hidden');
+                avatarIcon.classList.add('hidden');
+            } else {
+                avatarImg.classList.add('hidden');
+                avatarIcon.classList.remove('hidden');
+                avatarIcon.className = `fas fa-${appState.userProfile.avatarIcon} text-white`;
+            }
+        }
+
+        function showProfileSettings() {
+            document.getElementById('profileNameInput').value = appState.userProfile.name;
+            document.getElementById('iconSelection').classList.add('hidden');
+            
+            // Update preview
+            updateProfilePreview();
+            
+            // Select current icon
+            document.querySelectorAll('.icon-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            const currentIcon = document.querySelector(`[data-icon="${appState.userProfile.avatarIcon}"]`);
+            if (currentIcon) {
+                currentIcon.classList.add('selected');
+            }
+            
+            document.getElementById('profileModal').classList.add('show');
+        }
+
+        function hideProfileModal() {
+            document.getElementById('profileModal').classList.remove('show');
+        }
+
+        function chooseProfilePhoto() {
+            document.getElementById('profilePhotoInput').click();
+        }
+
+        function chooseProfileIcon() {
+            const iconSelection = document.getElementById('iconSelection');
+            iconSelection.classList.toggle('hidden');
+        }
+
+        function handleProfilePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    appState.userProfile.avatar = e.target.result;
+                    appState.userProfile.avatarType = 'photo';
+                    updateProfilePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function selectIcon(iconName) {
+            appState.userProfile.avatarIcon = iconName;
+            appState.userProfile.avatarType = 'icon';
+            appState.userProfile.avatar = null;
+            
+            document.querySelectorAll('.icon-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`[data-icon="${iconName}"]`).classList.add('selected');
+            
+            updateProfilePreview();
+        }
+
+        function updateProfilePreview() {
+            const previewImg = document.getElementById('profilePreviewImg');
+            const previewIcon = document.getElementById('profilePreviewIcon');
+            
+            if (appState.userProfile.avatarType === 'photo' && appState.userProfile.avatar) {
+                previewImg.src = appState.userProfile.avatar;
+                previewImg.classList.remove('hidden');
+                previewIcon.classList.add('hidden');
+            } else {
+                previewImg.classList.add('hidden');
+                previewIcon.classList.remove('hidden');
+                previewIcon.className = `fas fa-${appState.userProfile.avatarIcon}`;
+            }
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('profileNameInput').value.trim();
+            if (newName) {
+                appState.userProfile.name = newName;
+            }
+            
+            saveToStorage();
+            loadProfile();
+            hideProfileModal();
+        }
+
+        // Timer Functions
+        function setTimer(minutes, seconds = 0) {
+            appState.timer.minutes = minutes;
+            appState.timer.seconds = seconds;
+            updateTimerDisplay();
+            document.getElementById('customMinutes').value = minutes;
+            document.getElementById('customSeconds').value = seconds;
+        }
+
+        function setCustomTimer() {
+            const minutes = parseInt(document.getElementById('customMinutes').value) || 0;
+            const seconds = parseInt(document.getElementById('customSeconds').value) || 0;
+            
+            if ((minutes > 0 || seconds > 0) && minutes <= 120 && seconds <= 59) {
+                setTimer(minutes, seconds);
+            } else if (minutes === 0 && seconds === 0) {
+                alert('Please set at least 1 second');
+            }
+        }
+
+        function updateTimerDisplay() {
+            const display = `${String(appState.timer.minutes).padStart(2, '0')}:${String(appState.timer.seconds).padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = display;
+            document.getElementById('floatingTimerDisplay').textContent = display;
+        }
+
+        function updateTimerButtons() {
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const floatingStartBtn = document.getElementById('floatingStartBtn');
+            const floatingPauseBtn = document.getElementById('floatingPauseBtn');
+            
+            if (appState.timer.isRunning) {
+                startBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+                floatingStartBtn.classList.add('hidden');
+                floatingPauseBtn.classList.remove('hidden');
+            } else {
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                floatingStartBtn.classList.remove('hidden');
+                floatingPauseBtn.classList.add('hidden');
+            }
+        }
+
+        function toggleTimerSound() {
+            appState.timer.soundEnabled = !appState.timer.soundEnabled;
+            localStorage.setItem('sypace_timer_sound', JSON.stringify(appState.timer.soundEnabled));
+            updateSoundButtons();
+        }
+
+        function updateSoundButtons() {
+            const soundIcon = document.getElementById('soundIcon');
+            
+            if (appState.timer.soundEnabled) {
+                soundIcon.className = 'fas fa-volume-up';
+            } else {
+                soundIcon.className = 'fas fa-volume-mute';
+            }
+        }
+
+        function playTimerSound() {
+            if (appState.timer.soundEnabled) {
+                const audio = document.getElementById('timerAudio');
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log('Timer audio play failed:', e));
+                }
+            }
+        }
+
+        function playNotificationSound() {
+            // Create a simple beep sound for notifications
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function startTimer() {
+            if (appState.timer.isRunning) return;
+
+            appState.timer.isRunning = true;
+            appState.timer.isPaused = false;
+
+            updateTimerButtons();
+
+            // Start background music
+            playBackgroundAudio();
+
+            appState.timer.interval = setInterval(() => {
+                if (appState.timer.seconds === 0) {
+                    if (appState.timer.minutes === 0) {
+                        clearInterval(appState.timer.interval);
+                        appState.timer.isRunning = false;
+                        appState.timer.isPaused = false;
+
+                        playTimerSound();
+                        showNotification('Focus Session Complete!', 'Great job! Time for a break.');
+
+                        // Pause background music when timer ends
+                        pauseBackgroundAudio();
+
+                        const originalMinutes = parseInt(document.getElementById('customMinutes').value) || 25;
+                        const originalSeconds = parseInt(document.getElementById('customSeconds').value) || 0;
+                        appState.timer.minutes = originalMinutes;
+                        appState.timer.seconds = originalSeconds;
+                        updateTimerDisplay();
+                        updateTimerButtons();
+                        return;
+                    }
+                    appState.timer.minutes--;
+                    appState.timer.seconds = 59;
+                } else {
+                    appState.timer.seconds--;
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            if (!appState.timer.isRunning) return;
+            
+            clearInterval(appState.timer.interval);
+            appState.timer.isRunning = false;
+            appState.timer.isPaused = true;
+            updateTimerButtons();
+
+            // Pause background music
+            pauseBackgroundAudio();
+        }
+
+        function resetTimer() {
+            clearInterval(appState.timer.interval);
+            appState.timer.isRunning = false;
+            appState.timer.isPaused = false;
+            
+            const customMinutes = parseInt(document.getElementById('customMinutes').value) || 25;
+            const customSeconds = parseInt(document.getElementById('customSeconds').value) || 0;
+            appState.timer.minutes = customMinutes;
+            appState.timer.seconds = customSeconds;
+            
+            updateTimerDisplay();
+            updateTimerButtons();
+
+            // Pause background music
+            pauseBackgroundAudio();
+        }
+
+        function showFloatingTimer() {
+            appState.timer.isFloating = true;
+            document.getElementById('floatingTimer').classList.add('show');
+            updateNotificationPosition();
+        }
+
+        function hideFloatingTimer() {
+            appState.timer.isFloating = false;
+            document.getElementById('floatingTimer').classList.remove('show');
+            updateNotificationPosition();
+        }
+
+        function updateNotificationPosition() {
+            const notification = document.getElementById('notification');
+            if (appState.timer.isFloating) {
+                notification.classList.add('with-timer');
+            } else {
+                notification.classList.remove('with-timer');
+            }
+        }
+
+        // Sidebar Functions
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.add('hidden');
+        }
+
+        // Modal Functions
+        function showAddTaskModal() {
+            appState.editingTaskId = null;
+            appState.modalSubtasks = [];
+            document.getElementById('modalTitle').textContent = 'Add New Task';
+            document.getElementById('taskInput').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('dueDateInput').value = '';
+            document.getElementById('dueTimeInput').value = '';
+            document.getElementById('quickSubtaskInput').value = '';
+            document.querySelector('input[name="priority"][value="low"]').checked = true;
+            document.getElementById('categorySelect').value = 'Personal';
+            document.getElementById('customCategoryInput').classList.add('hidden');
+            document.getElementById('customCategoryInput').value = '';
+            renderModalSubtasks();
+            document.getElementById('taskModal').classList.add('show');
+        }
+
+        function hideTaskModal() {
+            document.getElementById('taskModal').classList.remove('show');
+            appState.modalSubtasks = [];
+        }
+
+        function showSettings() {
+            loadTheme(); // Refresh theme selection
+            document.getElementById('settingsModal').classList.add('show');
+        }
+
+        function hideSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function showCalendar() {
+            renderCalendar();
+            renderUpcomingTasks();
+            document.getElementById('calendarModal').classList.add('show');
+        }
+
+        function hideCalendarModal() {
+            document.getElementById('calendarModal').classList.remove('show');
+        }
+
+        function renderCalendar() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            document.getElementById('calendarMonth').textContent = 
+                `${monthNames[appState.calendar.currentMonth]} ${appState.calendar.currentYear}`;
+            
+            const firstDay = new Date(appState.calendar.currentYear, appState.calendar.currentMonth, 1);
+            const lastDay = new Date(appState.calendar.currentYear, appState.calendar.currentMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            for (let i = 0; i < 42; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                
+                const isCurrentMonth = currentDate.getMonth() === appState.calendar.currentMonth;
+                const isToday = currentDate.getTime() === today.getTime();
+                const tasksOnDate = getTasksForDate(currentDate);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = `p-2 text-center cursor-pointer rounded-lg transition-all hover:bg-gray-100 ${
+                    isCurrentMonth ? '' : 'text-gray-400'
+                } ${isToday ? 'font-bold' : ''}`;
+                
+                if (isToday) {
+                    dayElement.style.background = 'var(--primary)';
+                    dayElement.style.color = 'white';
+                }
+                
+                dayElement.innerHTML = `
+                    <div class="text-sm">${currentDate.getDate()}</div>
+                    ${tasksOnDate.length > 0 ? `<div class="w-2 h-2 rounded-full mx-auto mt-1" style="background: var(--secondary);"></div>` : ''}
+                `;
+                
+                dayElement.onclick = () => selectDate(currentDate);
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        function getTasksForDate(date) {
+            return appState.tasks.filter(task => {
+                if (!task.dueDate) return false;
+                const taskDate = new Date(task.dueDate);
+                return taskDate.toDateString() === date.toDateString();
+            });
+        }
+
+        function selectDate(date) {
+            appState.calendar.selectedDate = date;
+            renderCalendar();
+            renderUpcomingTasks();
+        }
+
+        function previousMonth() {
+            if (appState.calendar.currentMonth === 0) {
+                appState.calendar.currentMonth = 11;
+                appState.calendar.currentYear--;
+            } else {
+                appState.calendar.currentMonth--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            if (appState.calendar.currentMonth === 11) {
+                appState.calendar.currentMonth = 0;
+                appState.calendar.currentYear++;
+            } else {
+                appState.calendar.currentMonth++;
+            }
+            renderCalendar();
+        }
+
+        function renderUpcomingTasks() {
+            const container = document.getElementById('upcomingTasks');
+            const now = new Date();
+            
+            const upcomingTasks = appState.tasks
+                .filter(task => task.dueDate && !task.completed)
+                .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                .slice(0, 10);
+            
+            if (upcomingTasks.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-sm text-center py-4">No upcoming tasks</div>';
+                return;
+            }
+            
+            container.innerHTML = upcomingTasks.map(task => {
+                const dueDate = new Date(task.dueDate);
+                const isOverdue = dueDate < now;
+                const isToday = dueDate.toDateString() === now.toDateString();
+                
+                return `
+                    <div class="p-3 rounded-lg border-l-4 ${isOverdue ? 'border-red-400 bg-red-50' : isToday ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300 bg-gray-50'}">
+                        <div class="font-medium text-sm ${isOverdue ? 'text-red-700' : isToday ? 'text-yellow-700' : 'text-gray-700'}">${task.title}</div>
+                        <div class="text-xs ${isOverdue ? 'text-red-600' : isToday ? 'text-yellow-600' : 'text-gray-600'} mt-1">
+                            ${formatDate(dueDate)} ${isOverdue ? '(Overdue)' : isToday ? '(Today)' : ''}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">${task.category}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function logout() {
+            document.getElementById('logoutModal').classList.add('show');
+        }
+
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('show');
+        }
+
+        function confirmLogout() {
+            window.location.href = 'signin.html';
+        }
+
+        function handleCategoryChange() {
+            const select = document.getElementById('categorySelect');
+            const customInput = document.getElementById('customCategoryInput');
+            
+            if (select.value === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
+            }
+        }
+
+        function deleteTask(taskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task) {
+                console.log('Task not found:', taskId);
+                return;
+            }
+            
+            console.log('Deleting task:', task.title);
+            
+            // Move to deleted tasks
+            task.deletedAt = new Date().toISOString();
+            appState.deletedTasks.push(task);
+            
+            // Remove from active tasks
+            appState.tasks = appState.tasks.filter(t => t.id !== taskId);
+            
+            saveToStorage();
+            renderTasks();
+            updateStats();
+            updateDeletedTasksCount();
+            
+                       
+            showNotification('Task Deleted', `"${task.title}" moved to Recently Deleted`);
+               }
+
+
+
+        function addSubtaskToModal() {
+            const subtaskTitle = prompt('Enter subtask title:');
+           
+            if (subtaskTitle && subtaskTitle.trim()) {
+                const subtask = {
+                    id: Date.now() + Math.random(),
+                    title: subtaskTitle.trim(),
+                    completed: false
+                };
+                appState.modalSubtasks.push(subtask);
+                renderModalSubtasks();
+            }
+        }
+
+        function addQuickSubtask() {
+            const input = document.getElementById('quickSubtaskInput');
+            const title = input.value.trim();
+            
+            if (title) {
+                const subtask = {
+                    id: Date.now() + Math.random(),
+                    title: title,
+                    completed: false
+                };
+                appState.modalSubtasks.push(subtask);
+                input.value = '';
+                renderModalSubtasks();
+            }
+        }
+
+        function handleSubtaskEnter(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addQuickSubtask();
+            }
+        }
+
+        function updateSubtaskTitle(subtaskId, newTitle) {
+            const subtask = appState.modalSubtasks.find(s => s.id === subtaskId);
+            if (subtask && newTitle.trim()) {
+                subtask.title = newTitle.trim();
+            }
+        }
+
+        function moveSubtaskUp(subtaskId) {
+            const index = appState.modalSubtasks.findIndex(s => s.id === subtaskId);
+            if (index > 0) {
+                const temp = appState.modalSubtasks[index];
+                appState.modalSubtasks[index] = appState.modalSubtasks[index - 1];
+                appState.modalSubtasks[index - 1] = temp;
+                renderModalSubtasks();
+            }
+        }
+
+        function moveSubtaskDown(subtaskId) {
+            const index = appState.modalSubtasks.findIndex(s => s.id === subtaskId);
+            if (index < appState.modalSubtasks.length - 1) {
+                const temp = appState.modalSubtasks[index];
+                appState.modalSubtasks[index] = appState.modalSubtasks[index + 1];
+                appState.modalSubtasks[index + 1] = temp;
+                renderModalSubtasks();
+            }
+        }
+
+        function removeSubtaskFromModal(subtaskId) {
+            appState.modalSubtasks = appState.modalSubtasks.filter(s => s.id !== subtaskId);
+            renderModalSubtasks();
+        }
+
+        function toggleModalSubtask(subtaskId) {
+            const subtask = appState.modalSubtasks.find(s => s.id === subtaskId);
+            if (subtask) {
+                subtask.completed = !subtask.completed;
+                renderModalSubtasks();
+            }
+        }
+
+        function renderModalSubtasks() {
+            const container = document.getElementById('modalSubtasksList');
+            
+            if (appState.modalSubtasks.length === 0) {
+                container.innerHTML = '<div class="text-xs text-gray-500 text-center py-3 italic">No subtasks added yet. Use the input above to add some!</div>';
+                return;
+            }
+            
+            container.innerHTML = appState.modalSubtasks.map((subtask, index) => `
+                <div class="subtask-item flex items-center justify-between p-3 rounded-lg border transition-all hover:shadow-sm" style="background: var(--card-bg); border-color: var(--accent);">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="flex items-center gap-2 cursor-pointer" onclick="toggleModalSubtask(${subtask.id})">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs transition-all hover:scale-110 ${subtask.completed ? 'text-white' : ''}"
+                                 style="border-color: var(--primary); ${subtask.completed ? 'background: linear-gradient(135deg, var(--primary), var(--secondary));' : ''}">
+                                ${subtask.completed ? '<i class="fas fa-check" style="font-size: 10px;"></i>' : ''}
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <input type="text" value="${subtask.title}" 
+                                   onchange="updateSubtaskTitle(${subtask.id}, this.value)"
+                                   onblur="updateSubtaskTitle(${subtask.id}, this.value)"
+                                   class="w-full text-sm bg-transparent border-none focus:outline-none ${subtask.completed ? 'line-through opacity-60' : ''}"
+                                   style="color: var(--text);">
+                        </div>
+                        <div class="text-xs px-2 py-1 rounded-full" style="background: var(--accent); color: var(--primary);">
+                            ${index + 1}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 ml-2">
+                        <button onclick="moveSubtaskUp(${subtask.id})" class="text-gray-400 hover:text-gray-600 text-xs p-1 transition-all hover:scale-110" ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}>
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button onclick="moveSubtaskDown(${subtask.id})" class="text-gray-400 hover:text-gray-600 text-xs p-1 transition-all hover:scale-110" ${index === appState.modalSubtasks.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <button onclick="removeSubtaskFromModal(${subtask.id})" class="text-red-500 hover:text-red-700 text-xs p-1 transition-all hover:scale-110">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Task Functions
+        function saveTask() {
+            const title = document.getElementById('taskInput').value.trim();
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            const description = document.getElementById('taskDescription').value.trim();
+            const dueDate = document.getElementById('dueDateInput').value;
+            const dueTime = document.getElementById('dueTimeInput').value;
+            const priority = document.querySelector('input[name="priority"]:checked').value;
+            
+            // Handle category (custom or selected)
+            const categorySelect = document.getElementById('categorySelect');
+            const customCategoryInput = document.getElementById('customCategoryInput');
+            let category;
+            
+            if (categorySelect.value === 'custom') {
+                category = customCategoryInput.value.trim();
+                if (!category) {
+                    alert('Please enter a custom category name');
+                    return;
+                }
+            } else {
+                category = categorySelect.value;
+            }
+
+            const task = {
+                id: appState.editingTaskId || Date.now(),
+                title,
+                description,
+                completed: appState.editingTaskId ? 
+                    appState.tasks.find(t => t.id === appState.editingTaskId)?.completed || false : 
+                    false,
+                priority,
+                category,
+                dueDate: dueDate ? new Date(dueDate + (dueTime ? 'T' + dueTime : 'T23:59')).toISOString() : null,
+                createdAt: appState.editingTaskId ? 
+                    appState.tasks.find(t => t.id === appState.editingTaskId)?.createdAt || new Date().toISOString() : 
+                    new Date().toISOString(),
+                subtasks: [...appState.modalSubtasks]
+            };
+
+            if (appState.editingTaskId) {
+                const index = appState.tasks.findIndex(t => t.id === appState.editingTaskId);
+                appState.tasks[index] = task;
+            } else {
+                appState.tasks.push(task);
+            }
+
+            saveToStorage();
+            renderTasks();
+            hideTaskModal();
+            updateStats();
+            
+            appState.editingTaskId = null;
+        }
+
+        function toggleTask(taskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                
+                saveToStorage();
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function editTask(taskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            appState.editingTaskId = taskId;
+            appState.modalSubtasks = task.subtasks ? [...task.subtasks] : [];
+            
+            document.getElementById('modalTitle').textContent = 'Edit Task';
+            document.getElementById('taskInput').value = task.title;
+            document.getElementById('taskDescription').value = task.description || '';
+            
+            if (task.dueDate) {
+                const dueDate = new Date(task.dueDate);
+                document.getElementById('dueDateInput').value = dueDate.toISOString().split('T')[0];
+                document.getElementById('dueTimeInput').value = dueDate.toTimeString().slice(0, 5);
+            } else {
+                document.getElementById('dueDateInput').value = '';
+                document.getElementById('dueTimeInput').value = '';
+            }
+            
+            document.querySelector(`input[name="priority"][value="${task.priority}"]`).checked = true;
+            
+            // Handle category selection
+            const categorySelect = document.getElementById('categorySelect');
+            const customCategoryInput = document.getElementById('customCategoryInput');
+            const standardCategories = ['Personal', 'Work', 'Health', 'Learning'];
+            
+            if (standardCategories.includes(task.category)) {
+                categorySelect.value = task.category;
+                customCategoryInput.classList.add('hidden');
+                customCategoryInput.value = '';
+            } else {
+                categorySelect.value = 'custom';
+                customCategoryInput.classList.remove('hidden');
+                customCategoryInput.value = task.category;
+            }
+            
+            renderModalSubtasks();
+            document.getElementById('taskModal').classList.add('show');
+        }
+
+        function duplicateTask(taskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            const duplicatedTask = {
+                ...task,
+                id: Date.now(),
+                title: task.title + ' (Copy)',
+                completed: false,
+                createdAt: new Date().toISOString(),
+                subtasks: task.subtasks ? task.subtasks.map(sub => ({
+                    ...sub,
+                    id: Date.now() + Math.random(),
+                    completed: false
+                })) : []
+            };
+            
+            appState.tasks.push(duplicatedTask);
+            saveToStorage();
+            renderTasks();
+            updateStats();
+            showNotification('Task Duplicated', 'Task has been duplicated successfully!');
+        }
+
+        function addSubtask(taskId) {
+            const subtaskTitle = prompt('Enter subtask title:');
+            if (!subtaskTitle || !subtaskTitle.trim()) return;
+            
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            if (!task.subtasks) task.subtasks = [];
+            
+            const subtask = {
+                id: Date.now() + Math.random(),
+                title: subtaskTitle.trim(),
+                completed: false
+            };
+            
+            task.subtasks.push(subtask);
+            saveToStorage();
+            renderTasks();
+            showNotification('Subtask Added', 'Subtask has been added successfully!');
+        }
+
+        function toggleSubtask(taskId, subtaskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task || !task.subtasks) return;
+            
+            const subtask = task.subtasks.find(s => s.id === subtaskId);
+            if (!subtask) return;
+            
+            subtask.completed = !subtask.completed;
+            
+            // Check if all subtasks are completed
+            const allSubtasksCompleted = task.subtasks.every(s => s.completed);
+            if (allSubtasksCompleted && task.subtasks.length > 0 && !task.completed) {
+                task.completed = true;
+                showNotification('Task Auto-Completed', 'All subtasks completed! Main task marked as done! 🎉');
+            }
+            
+            saveToStorage();
+            renderTasks();
+            updateStats();
+        }
+
+        function deleteSubtask(taskId, subtaskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task || !task.subtasks) return;
+            
+            task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+            saveToStorage();
+            renderTasks();
+            showNotification('Subtask Deleted', 'Subtask has been removed');
+        }
+
+        function showTaskOptions(taskId) {
+            const task = appState.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            const choice = prompt(`Choose an action:\n1. Edit Task\n2. Add Subtask\n3. Duplicate Task\n4. Delete Task\n\nEnter 1, 2, 3, or 4:`);
+            
+            switch (choice) {
+                case '1':
+                    editTask(taskId);
+                    break;
+                case '2':
+                    addSubtask(taskId);
+                    break;
+                case '3':
+                    duplicateTask(taskId);
+                    break;
+                case '4':
+                    deleteTask(taskId);
+                    break;
+            }
+        }
+
+        // Filter and Search Functions
+        function filterTasks(filter) {
+            appState.currentFilter = filter;
+            
+            document.querySelectorAll('.filter-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderTasks();
+        }
+
+        function searchTasks() {
+            appState.searchQuery = document.getElementById('searchInput').value.trim();
+            renderTasks();
+        }
+
+
+
+        function getFilteredTasks() {
+            let filtered = appState.tasks;
+            const now = new Date();
+
+            switch (appState.currentFilter) {
+                case 'active':
+                    filtered = filtered.filter(task => !task.completed);
+                    break;
+                case 'completed':
+                    filtered = filtered.filter(task => task.completed);
+                    break;
+                case 'overdue':
+                    filtered = filtered.filter(task => {
+                        return new Date(task.dueDate) < now;
+                    });
+                    break;
+            }
+
+            if (appState.searchQuery) {
+                const query = appState.searchQuery.toLowerCase();
+                filtered = filtered.filter(task => 
+                    task.title.toLowerCase().includes(query) ||
+                    task.description.toLowerCase().includes(query) ||
+                    task.category.toLowerCase().includes(query)
+                );
+            }
+
+            return filtered;
+        }
+
+
+
+        function renderTasks() {
+            const container = document.getElementById('tasksList');
+            const emptyState = document.getElementById('emptyState');
+            const floatingBtn = document.getElementById('floatingAddBtn');
+            
+            const filteredTasks = getFilteredTasks();
+            
+            if (filteredTasks.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                floatingBtn.classList.add('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            floatingBtn.classList.remove('hidden');
+            
+            const now = new Date();
+            
+            container.innerHTML = filteredTasks.map(task => {
+                const isOverdue = task.dueDate && new Date(task.dueDate) < now && !task.completed;
+                const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+                
+                return `
+                    <div class="task-card bg-white rounded-2xl p-6 shadow-lg fade-in priority-${task.priority}" 
+                         style="background: var(--card-bg); box-shadow: 0 8px 35px var(--shadow);">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <button onclick="toggleTask(${task.id})" 
+                                        class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 ${task.completed ? 'text-white' : ''}"
+                                        style="border-color: var(--primary); ${task.completed ? 'background: linear-gradient(135deg, var(--primary), var(--secondary));' : ''}">
+                                    ${task.completed ? '<i class="fas fa-check text-xs"></i>' : ''}
+                                </button>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-lg ${task.completed ? 'line-through opacity-60' : ''}" style="color: var(--primary);">
+                                        ${task.title}
+                                    </h3>
+                                    ${task.description ? `<p class="text-sm text-gray-600 mt-1 ${task.completed ? 'opacity-60' : ''}">${task.description}</p>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${isOverdue ? '<i class="fas fa-exclamation-triangle text-red-500 text-sm"></i>' : ''}
+                                <button onclick="editTask(${task.id})" class="transition-all duration-300 hover:scale-110" style="color: var(--primary);" title="Edit Task" onmouseover="this.style.color='var(--secondary)'" onmouseout="this.style.color='var(--primary)'">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 transition-all duration-300 hover:scale-110" title="Delete Task">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${task.subtasks && task.subtasks.length > 0 ? `
+                            <div class="mt-3 space-y-2">
+                                <div class="text-xs font-medium" style="color: var(--secondary);">
+                                    Subtasks (${task.subtasks.filter(s => s.completed).length}/${task.subtasks.length})
+                                </div>
+                                ${task.subtasks.slice(0, 3).map(subtask => `
+                                    <div class="subtask-item flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-all">
+                                        <div class="flex items-center gap-2 flex-1 cursor-pointer" onclick="toggleSubtask(${task.id}, ${subtask.id})">
+                                            <div class="w-4 h-4 rounded border flex items-center justify-center text-xs ${subtask.completed ? 'text-white' : ''}"
+                                                 style="border-color: var(--secondary); ${subtask.completed ? 'background: var(--secondary);' : ''}">
+                                                ${subtask.completed ? '<i class="fas fa-check" style="font-size: 8px;"></i>' : ''}
+                                            </div>
+                                            <span class="text-xs ${subtask.completed ? 'line-through opacity-60' : ''} flex-1">${subtask.title}</span>
+                                        </div>
+                                        <button onclick="event.stopPropagation(); deleteSubtask(${task.id}, ${subtask.id})" class="text-red-500 hover:text-red-700 text-xs p-1 opacity-60 hover:opacity-100 transition-all">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                                ${task.subtasks.length > 3 ? `<div class="text-xs text-gray-500">+${task.subtasks.length - 3} more subtasks</div>` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex items-center justify-between text-sm mt-3">
+                            <div class="flex items-center gap-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-medium" style="background: var(--accent); color: var(--primary);">
+                                    ${task.category}
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <div class="w-3 h-3 rounded-full ${task.priority === 'high' ? 'bg-red-600' : task.priority === 'medium' ? 'bg-orange-500' : 'bg-emerald-500'}"></div>
+                                    <span class="text-xs capitalize">${task.priority}</span>
+                                </div>
+                            </div>
+                            ${dueDate ? `
+                                <div class="text-xs ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-500'}">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    ${formatDate(dueDate)}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Utility Functions
+        function formatDate(date) {
+            const now = new Date();
+            const diffTime = date - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Tomorrow';
+            if (diffDays === -1) return 'Yesterday';
+            if (diffDays < -1) return `${Math.abs(diffDays)} days ago`;
+            if (diffDays > 1) return `In ${diffDays} days`;
+            
+            return date.toLocaleDateString();
+        }
+
+        function setQuickDate(option) {
+            const today = new Date();
+            const dateInput = document.getElementById('dueDateInput');
+            
+            switch (option) {
+                case 'today':
+                    dateInput.value = today.toISOString().split('T')[0];
+                    break;
+                case 'tomorrow':
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    dateInput.value = tomorrow.toISOString().split('T')[0];
+                    break;
+                case 'nextWeek':
+                    const nextWeek = new Date(today);
+                    nextWeek.setDate(nextWeek.getDate() + 7);
+                    dateInput.value = nextWeek.toISOString().split('T')[0];
+                    break;
+            }
+        }
+
+        function clearDate() {
+            document.getElementById('dueDateInput').value = '';
+            document.getElementById('dueTimeInput').value = '';
+        }
+
+        function updateStats() {
+            const activeTasks = appState.tasks.filter(t => !t.completed).length;
+            const completedTasks = appState.tasks.filter(t => t.completed).length;
+            
+            document.getElementById('activeCount').textContent = activeTasks;
+            document.getElementById('completedCount').textContent = completedTasks;
+            document.getElementById('totalTasks').textContent = completedTasks;
+            document.getElementById('currentStreak').textContent = '0';
+        }
+
+        function updateQuote() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('inspirationalQuote').textContent = `"${randomQuote.text}"`;
+            document.getElementById('quoteAuthor').textContent = `— ${randomQuote.author}`;
+        }
+
+        function showNotification(title, message) {
+            document.getElementById('notificationTitle').textContent = title;
+            document.getElementById('notificationMessage').textContent = message;
+            updateNotificationPosition();
+            document.getElementById('notification').classList.add('show');
+            
+            setTimeout(() => {
+                closeNotification();
+            }, 5000);
+        }
+
+        function closeNotification() {
+            document.getElementById('notification').classList.remove('show');
+        }
+
+        // Recently Deleted Functions
+        function showRecentlyDeleted() {
+            renderDeletedTasks();
+            document.getElementById('recentlyDeletedModal').classList.add('show');
+        }
+
+        function hideRecentlyDeletedModal() {
+            document.getElementById('recentlyDeletedModal').classList.remove('show');
+        }
+
+        function renderDeletedTasks() {
+            const container = document.getElementById('deletedTasksList');
+            const emptyState = document.getElementById('emptyDeletedState');
+            
+            if (appState.deletedTasks.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = appState.deletedTasks.map(task => {
+                const deletedDate = new Date(task.deletedAt);
+                const daysLeft = 30 - Math.floor((new Date() - deletedDate) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-red-400" style="background: var(--card-bg); box-shadow: 0 4px 15px var(--shadow);">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-lg mb-1" style="color: var(--primary);">${task.title}</h4>
+                                ${task.description ? `<p class="text-sm text-gray-600 mb-2">${task.description}</p>` : ''}
+                                <div class="flex items-center gap-4 text-xs text-gray-500">
+                                    <span class="px-2 py-1 rounded-full" style="background: var(--accent); color: var(--primary);">${task.category}</span>
+                                    <span>Priority: ${task.priority}</span>
+                                    <span class="text-red-500 font-medium">Deletes in ${daysLeft} days</span>
+                                </div>
+                                ${task.subtasks && task.subtasks.length > 0 ? `
+                                    <div class="mt-2 text-xs text-gray-500">
+                                        ${task.subtasks.length} subtask${task.subtasks.length > 1 ? 's' : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button onclick="restoreTask(${task.id})" class="px-3 py-1 text-xs rounded-lg font-medium transition-all duration-300 hover:scale-105" style="background: var(--primary); color: white;" title="Restore Task">
+                                    <i class="fas fa-undo mr-1"></i>Restore
+                                </button>
+                                <button onclick="permanentlyDeleteTask(${task.id})" class="px-3 py-1 text-xs rounded-lg font-medium transition-all duration-300 hover:scale-105 bg-red-500 text-white" title="Delete Permanently">
+                                    <i class="fas fa-trash mr-1"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function restoreTask(taskId) {
+            const taskIndex = appState.deletedTasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                const task = appState.deletedTasks[taskIndex];
+                delete task.deletedAt;
+                
+                appState.tasks.push(task);
+                appState.deletedTasks.splice(taskIndex, 1);
+                
+                saveToStorage();
+                renderDeletedTasks();
+                renderTasks();
+                updateStats();
+                updateDeletedTasksCount();
+                showNotification('Task Restored', 'Task has been restored successfully');
+            }
+        }
+
+        function permanentlyDeleteTask(taskId) {
+            const task = appState.deletedTasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            const confirmMessage = `Are you sure you want to permanently delete "${task.title}"?\n\nThis action cannot be undone.`;
+            
+            if (confirm(confirmMessage)) {
+                const taskIndex = appState.deletedTasks.findIndex(t => t.id === taskId);
+                if (taskIndex !== -1) {
+                    appState.deletedTasks.splice(taskIndex, 1);
+                    saveToStorage();
+                    renderDeletedTasks();
+                    updateDeletedTasksCount();
+                    showNotification('Task Permanently Deleted', 'Task has been permanently deleted');
+                }
+            }
+        }
+
+        function updateDeletedTasksCount() {
+            const count = appState.deletedTasks.length;
+            const countElement = document.getElementById('deletedTasksCount');
+            
+            if (count > 0) {
+                countElement.textContent = count > 99 ? '99+' : count;
+                countElement.classList.remove('hidden');
+            } else {
+                countElement.classList.add('hidden');
+            }
+        }
+
+        function deleteCompletedTasksAfterMonth() {
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            
+            const tasksToMove = appState.tasks.filter(task => 
+                task.completed && new Date(task.createdAt) < oneMonthAgo
+            );
+            
+            if (tasksToMove.length === 0) {
+                showNotification('No Tasks to Clean', 'No completed tasks older than 1 month found');
+                return;
+            }
+            
+            const confirmMessage = `Found ${tasksToMove.length} completed task${tasksToMove.length > 1 ? 's' : ''} older than 1 month.\n\nMove them to Recently Deleted?`;
+            
+            if (confirm(confirmMessage)) {
+                tasksToMove.forEach(task => {
+                    task.deletedAt = new Date().toISOString();
+                    appState.deletedTasks.push(task);
+                });
+                
+                appState.tasks = appState.tasks.filter(task => 
+                    !(task.completed && new Date(task.createdAt) < oneMonthAgo)
+                );
+                
+                saveToStorage();
+                renderTasks();
+                renderDeletedTasks();
+                updateStats();
+                updateDeletedTasksCount();
+                showNotification('Tasks Cleaned', `${tasksToMove.length} old completed tasks moved to Recently Deleted`);
+            }
+        }
+
+        function cleanupExpiredTasks() {
+            // Move completed tasks older than 1 month to deleted automatically
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            
+            const expiredTasks = appState.tasks.filter(task => 
+                task.completed && new Date(task.createdAt) < oneMonthAgo
+            );
+            
+            if (expiredTasks.length > 0) {
+                expiredTasks.forEach(task => {
+                    task.deletedAt = new Date().toISOString();
+                    appState.deletedTasks.push(task);
+                });
+                
+                appState.tasks = appState.tasks.filter(task => 
+                    !(task.completed && new Date(task.createdAt) < oneMonthAgo)
+                );
+                
+                saveToStorage();
+            }
+        }
+
+        function cleanupOldDeletedTasks() {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const initialCount = appState.deletedTasks.length;
+            appState.deletedTasks = appState.deletedTasks.filter(task => 
+                new Date(task.deletedAt) > thirtyDaysAgo
+            );
+            
+            const removedCount = initialCount - appState.deletedTasks.length;
+            if (removedCount > 0) {
+                saveToStorage();
+                console.log(`Automatically removed ${removedCount} expired deleted tasks`);
+            }
+        }
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Background audio
+        function playBackgroundAudio() {
+            const audio = document.getElementById('backgroundAudio');
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log('Background audio play failed:', e));
+            }
+        }
+        function pauseBackgroundAudio() {
+            const audio = document.getElementById('backgroundAudio');
+            if (audio) {
+                audio.pause();
+            }
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96ea04c052b4fecc',t:'MTc1NTEwNzA0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

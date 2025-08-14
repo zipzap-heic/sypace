@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up & Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Crimson+Text:ital@1&display=swap" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #ce8c95 0%, #d399a1 25%, #d9a5ac 50%, #deb2b8 75%, #e4bfc4 100%);
+        }
+        .card-bg {
+            background: linear-gradient(145deg, #faf2f3 0%, #f4e5e7 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ce8c95 0%, #d399a1 100%);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #d399a1 0%, #deb2b8 100%);
+        }
+        .social-btn {
+            background: linear-gradient(135deg, #efd9dc 0%, #e9ccd0 100%);
+        }
+        .social-btn:hover {
+            background: linear-gradient(135deg, #e9ccd0 0%, #e4bfc4 100%);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: linear-gradient(145deg, #faf2f3 0%, #f4e5e7 100%);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        .tab-button.active {
+            background: linear-gradient(135deg, #ce8c95 0%, #d399a1 100%);
+            color: white;
+        }
+        .tab-button {
+            background: linear-gradient(135deg, #efd9dc 0%, #e9ccd0 100%);
+            color: #ce8c95;
+        }
+        .input-field {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #e9ccd0;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #ce8c95;
+            background: rgba(255, 255, 255, 1);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(206, 140, 149, 0.1);
+        }
+        
+        /* Animated Background Elements */
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+        }
+        
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            background: #ce8c95;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+            animation-duration: 25s;
+        }
+        
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            background: #d399a1;
+            top: 60%;
+            left: 80%;
+            animation-delay: -5s;
+            animation-duration: 30s;
+        }
+        
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            background: #deb2b8;
+            top: 80%;
+            left: 20%;
+            animation-delay: -10s;
+            animation-duration: 35s;
+        }
+        
+        .shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            background: #e4bfc4;
+            top: 10%;
+            left: 70%;
+            animation-delay: -15s;
+            animation-duration: 28s;
+        }
+        
+        .shape:nth-child(5) {
+            width: 90px;
+            height: 90px;
+            background: #e9ccd0;
+            top: 40%;
+            left: 5%;
+            animation-delay: -20s;
+            animation-duration: 32s;
+        }
+        
+        .shape:nth-child(6) {
+            width: 70px;
+            height: 70px;
+            background: #efd9dc;
+            top: 70%;
+            left: 60%;
+            animation-delay: -8s;
+            animation-duration: 26s;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Gradient Animation */
+        .animated-gradient {
+            background: linear-gradient(45deg, #ce8c95, #d399a1, #d9a5ac, #deb2b8, #e4bfc4, #e9ccd0);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        /* Pulse Animation for Main Container */
+        .pulse-glow {
+            animation: pulseGlow 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                box-shadow: 0 25px 50px -12px rgba(206, 140, 149, 0.25);
+            }
+        }
+    </style>
+</head>
+<body class="animated-gradient min-h-screen flex flex-col p-4 relative">
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+    
+    <!-- Website Header at Very Top -->
+    <div class="text-center pt-8 pb-4 relative z-10">
+        <h1 class="text-6xl font-bold mb-2" style="font-family: 'Dancing Script', cursive; color: #ffffff; text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(206, 140, 149, 0.8);">
+            Sypace
+        </h1>
+        <p class="text-lg font-semibold" style="font-family: 'Crimson Text', serif; font-style: italic; color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);">
+            A space for your tasks
+        </p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex flex-col items-center justify-center">
+        <!-- Tab Navigation Outside Box -->
+        <div class="flex mb-6 rounded-lg overflow-hidden gap-4 relative z-10">
+            <button id="signupTab" class="tab-button active py-3 px-8 font-semibold transition-all duration-300 rounded-lg w-32 text-center">
+                Sign Up
+            </button>
+            <button id="loginTab" class="tab-button py-3 px-8 font-semibold transition-all duration-300 rounded-lg w-32 text-center">
+                Login
+            </button>
+        </div>
+        
+        <div class="card-bg rounded-2xl shadow-2xl pulse-glow p-8 w-full max-w-lg relative z-10">
+
+        <!-- Sign Up Form -->
+        <div id="signupForm" class="tab-content">
+            <h2 class="text-3xl font-bold text-center mb-8" style="color: #ce8c95;">Create Account</h2>
+            
+            <!-- Under Construction Warning -->
+            <div class="mb-6 p-4 rounded-lg border-2 border-dashed" style="background: rgba(255, 193, 7, 0.1); border-color: #ffc107;">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">🚧</div>
+                    <h3 class="font-bold text-lg mb-2" style="color: #ce8c95;">Feature Under Construction!</h3>
+                    <p class="text-sm text-gray-600">The hamster crew keeps getting distracted by sunflower seeds! Please check back later or use the login feature instead.</p>
+                </div>
+            </div>
+            
+            <form class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: #ce8c95;">Username</label>
+                    <input type="text" class="input-field w-full px-4 py-3 rounded-lg" placeholder="Choose a username" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: #ce8c95;">Email Address</label>
+                    <input type="email" class="input-field w-full px-4 py-3 rounded-lg" placeholder="Enter your email" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: #ce8c95;">Password</label>
+                    <input type="password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="Create a password" required>
+                </div>
+                
+                <button type="button" disabled class="relative w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 cursor-not-allowed opacity-60" style="background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); color: #ffffff;">
+                    <span class="line-through">Create Account</span>
+                    <span class="absolute inset-0 flex items-center justify-center font-bold text-red-600 text-lg">NOPE!</span>
+                </button>
+            </form>
+            
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t" style="border-color: #e9ccd0;"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 text-gray-500" style="background: linear-gradient(145deg, #faf2f3 0%, #f4e5e7 100%);">Or continue with</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <button onclick="showUnavailableModal()" class="social-btn flex justify-center items-center px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                            <path fill="#ce8c95" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#ce8c95" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#ce8c95" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ce8c95" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Google
+                    </button>
+                    
+                    <button onclick="showUnavailableModal()" class="social-btn flex justify-center items-center px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                            <path fill="#ce8c95" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        Apple
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-center mb-8" style="color: #ce8c95;">Welcome Back</h2>
+            
+            <form class="space-y-6" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: #ce8c95;">Username</label>
+                    <input type="text" id="username" class="input-field w-full px-4 py-3 rounded-lg" placeholder="Enter your username" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: #ce8c95;">Password</label>
+                    <input type="password" id="password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded" style="color: #ce8c95;">
+                        <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                    </label>
+                    <a href="#" class="text-sm hover:underline" style="color: #ce8c95;">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full py-3 px-4 rounded-lg text-white font-semibold hover:shadow-lg transition-all duration-300">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t" style="border-color: #e9ccd0;"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 text-gray-500" style="background: linear-gradient(145deg, #faf2f3 0%, #f4e5e7 100%);">Or continue with</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <button onclick="showUnavailableModal()" class="social-btn flex justify-center items-center px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                            <path fill="#ce8c95" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#ce8c95" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#ce8c95" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ce8c95" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Google
+                    </button>
+                    
+                    <button onclick="showUnavailableModal()" class="social-btn flex justify-center items-center px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                            <path fill="#ce8c95" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        Apple
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Credentials -->
+        <div class="mt-8 p-4 rounded-lg" style="background: rgba(206, 140, 149, 0.1); border: 1px solid #e9ccd0;">
+            <h3 class="text-sm font-semibold mb-2" style="color: #ce8c95;">Admin Credentials:</h3>
+            <p class="text-xs text-gray-600">Username: <span class="font-mono font-semibold">Admin321</span></p>
+            <p class="text-xs text-gray-600">Password: <span class="font-mono font-semibold">ctrl_C</span></p>
+        </div>
+        </div>
+    </div>
+
+    <!-- Unavailable Feature Modal -->
+    <div id="unavailableModal" class="modal">
+        <div class="modal-content text-center">
+            <div class="mb-4">
+                <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #efd9dc 0%, #e9ccd0 100%);">
+                    <svg class="w-8 h-8" style="color: #ce8c95;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-semibold mb-2" style="color: #ce8c95;">Feature Not Available</h3>
+            <p class="text-gray-600 mb-6">Google and Apple sign-in are not available at this time. Please use the regular sign-up form instead.</p>
+            <button onclick="closeModal()" class="btn-primary px-6 py-2 rounded-lg text-white font-semibold hover:shadow-lg transition-all duration-300">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content text-center">
+            <div class="mb-4">
+                <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #e4bfc4 0%, #e9ccd0 100%);">
+                    <svg class="w-8 h-8" style="color: #ce8c95;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-semibold mb-2" style="color: #ce8c95;">Welcome, Admin!</h3>
+            <p class="text-gray-600 mb-6">You have successfully logged in with admin credentials.</p>
+            <a href="homepage.html" onclick="closeModal()" class="btn-primary px-6 py-2 rounded-lg text-white font-semibold hover:shadow-lg transition-all duration-300">
+                Continue
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        const signupTab = document.getElementById('signupTab');
+        const loginTab = document.getElementById('loginTab');
+        const signupForm = document.getElementById('signupForm');
+        const loginForm = document.getElementById('loginForm');
+
+        signupTab.addEventListener('click', () => {
+            signupTab.classList.add('active');
+            loginTab.classList.remove('active');
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+        });
+
+        loginTab.addEventListener('click', () => {
+            loginTab.classList.add('active');
+            signupTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+        });
+
+        // Modal functionality
+        function showUnavailableModal() {
+            document.getElementById('unavailableModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('unavailableModal').classList.remove('show');
+            document.getElementById('successModal').classList.remove('show');
+        }
+
+        // Login functionality
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'Admin321' && password === 'ctrl_C') {
+                document.getElementById('successModal').classList.add('show');
+            } else {
+                alert('Invalid credentials. Please check the admin credentials at the bottom of the form.');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            const unavailableModal = document.getElementById('unavailableModal');
+            const successModal = document.getElementById('successModal');
+            
+            if (event.target === unavailableModal) {
+                unavailableModal.classList.remove('show');
+            }
+            if (event.target === successModal) {
+                successModal.classList.remove('show');
+            }
+        });
+
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96e80fe2b7055de1',t:'MTc1NTA4NjUzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
